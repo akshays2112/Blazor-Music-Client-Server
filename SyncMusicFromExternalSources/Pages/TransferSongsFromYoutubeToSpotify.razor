@@ -1,0 +1,52 @@
+﻿@page "/transfersongsfromyoutubetospotify"
+@using Google.Apis.YouTube.v3
+@using Google.Apis.Services
+@using SpotifyApi.NetCore
+@inject NavigationManager navMgr
+@inject IUsersProfileApi usersApi
+@inject IPlaylistsApi playlistsApi
+<h3>YoutubeListPlaylists</h3>
+<table class="table table-dark">
+    @foreach (MyPlaylist myPlaylist in myPlaylists)
+    {
+        <tr>
+            <td>
+                <YoutubePlaylist SingleYoutubePlaylist="@myPlaylist" SpotifyUserPlayLists="@userPlayLists" />
+            </td>
+        </tr>
+    }
+</table>
+@code {
+    List<UserPlaylist> userPlayLists = new List<UserPlaylist>();
+
+    List<MyPlaylist> myPlaylists = new List<MyPlaylist>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        User user = await usersApi.GetCurrentUsersProfile(Startup.SpotifyUserAccessToken);
+        PlaylistsSearchResult playlistsSearchResult = await playlistsApi.GetPlaylists(user.Id, Startup.SpotifyUserAccessToken);
+        foreach (PlaylistSimplified playlistSimplified in playlistsSearchResult.Items)
+        {
+            UserPlaylist userPlaylist = new UserPlaylist(playlistSimplified.Name, playlistSimplified.Tracks.Total, playlistSimplified.Id);
+            userPlayLists.Add(userPlaylist);
+        }
+
+        YouTubeService yts = new YouTubeService(new BaseClientService.Initializer
+        {
+            ApplicationName = Startup.GoogleApisApplicationName,
+            ApiKey = Startup.GoogleApisApiKey
+        });
+        PlaylistsResource.ListRequest lr = yts.Playlists.List("snippet,contentDetails");
+        lr.Mine = true;
+        lr.MaxResults = 50;
+        lr.AccessToken = Startup.GoogleUserAccessToken;
+        IList<Google.Apis.YouTube.v3.Data.Playlist> playlists = (await lr.ExecuteAsync()).Items;
+        foreach (Google.Apis.YouTube.v3.Data.Playlist p in playlists)
+        {
+            MyPlaylist myPlaylist = new MyPlaylist(p.Snippet.Title, p.Id, p.ContentDetails.ItemCount);
+            myPlaylists.Add(myPlaylist);
+        }
+
+        await base.OnInitializedAsync();
+    }
+}
