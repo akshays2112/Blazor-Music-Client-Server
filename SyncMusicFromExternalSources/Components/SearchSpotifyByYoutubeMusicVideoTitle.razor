@@ -5,7 +5,7 @@
     <span title="Expand or Collapse">
         <svg onclick="clickSvg('#@svgPathID')" width="34" height="34" transform="scale(0.735 0.735)" data-toggle="collapse" data-target="#@divID">
             <circle cx="17" cy="17" r="15" stroke="white" stroke-width="4" fill="none" />
-            <path id="@svgPathID" d="M17 28 L8 18 L14 18 L14 8 L20 8 L20 18 L26 18 Z" fill="white" />
+            <path id="@svgPathID" d="M 17,6 8,16 h 6 v 10 h 6 V 16 h 6 z" fill="white" />
             Sorry, your browser does not support inline SVG.
         </svg>
     </span>
@@ -46,13 +46,13 @@ Youtube Video Title :: @YoutubePlaylistItem.Title
 
     List<CustomTrack> searchTracks = new List<CustomTrack>();
 
-    string divID = $"divID{(Startup.DivIndex++).ToString()}";
-    string svgPathID = $"svgPathID{(Startup.DivIndex++).ToString()}";
+    string divID = $"divID{(Globals.DivIndex++).ToString()}";
+    string svgPathID = $"svgPathID{(Globals.DivIndex++).ToString()}";
 
     async Task SearchSpotifyByTitle()
     {
         searchTracks.Clear();
-        SearchResult searchResult = await searchApi.Search(YoutubePlaylistItem.CleanedUpTitle, "track", "US", 50, 0, Startup.SpotifyUserAccessToken);
+        SearchResult searchResult = await searchApi.Search(YoutubePlaylistItem.CleanedUpTitle, "track", "US", 50, 0, Globals.SpotifyUserAccessToken);
         foreach (Track track in searchResult.Tracks.Items)
         {
             CustomTrack customTrack = new CustomTrack(track.Name, track.Id);

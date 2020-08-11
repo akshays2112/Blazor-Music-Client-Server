@@ -1,4 +1,4 @@
-﻿@page "/transfersongsfromyoutubetospotify"
+﻿@page "/findandaddspotifysongsforexistingyoutubemusicvideos"
 @using Google.Apis.YouTube.v3
 @using Google.Apis.Services
 @using SpotifyApi.NetCore
@@ -23,8 +23,8 @@
 
     protected override async Task OnInitializedAsync()
     {
-        User user = await usersApi.GetCurrentUsersProfile(Startup.SpotifyUserAccessToken);
-        PlaylistsSearchResult playlistsSearchResult = await playlistsApi.GetPlaylists(user.Id, Startup.SpotifyUserAccessToken);
+        User user = await usersApi.GetCurrentUsersProfile(Globals.SpotifyUserAccessToken);
+        PlaylistsSearchResult playlistsSearchResult = await playlistsApi.GetPlaylists(user.Id, Globals.SpotifyUserAccessToken);
         foreach (PlaylistSimplified playlistSimplified in playlistsSearchResult.Items)
         {
             UserPlaylist userPlaylist = new UserPlaylist(playlistSimplified.Name, playlistSimplified.Tracks.Total, playlistSimplified.Id);
@@ -33,13 +33,13 @@
 
         YouTubeService yts = new YouTubeService(new BaseClientService.Initializer
         {
-            ApplicationName = Startup.GoogleApisApplicationName,
-            ApiKey = Startup.GoogleApisApiKey
+            ApplicationName = Globals.GoogleApisApplicationName,
+            ApiKey = Globals.GoogleApisApiKey
         });
         PlaylistsResource.ListRequest lr = yts.Playlists.List("snippet,contentDetails");
         lr.Mine = true;
         lr.MaxResults = 50;
-        lr.AccessToken = Startup.GoogleUserAccessToken;
+        lr.AccessToken = Globals.GoogleUserAccessToken;
         IList<Google.Apis.YouTube.v3.Data.Playlist> playlists = (await lr.ExecuteAsync()).Items;
         foreach (Google.Apis.YouTube.v3.Data.Playlist p in playlists)
         {

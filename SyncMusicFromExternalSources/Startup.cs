@@ -21,14 +21,6 @@ namespace SyncMusicFromExternalSources
 {
     public class Startup
     {
-        public static string SpotifyUserAccessToken;
-        public static string GoogleUserAccessToken;
-        public static string TwitterUserAccessToken;
-        public static string FacebookUserAccessToken;
-        public static string GoogleApisApplicationName = "Put your Google App Name in this string";
-        public static string GoogleApisApiKey = "Put your Google API Key in this string";
-        public static long DivIndex = 0;
-
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
@@ -52,12 +44,11 @@ namespace SyncMusicFromExternalSources
 
             services.AddAuthentication().AddSpotify(options =>
             {
-                options.ClientId = "Put your Spotify API Client ID in this string";
-                options.ClientSecret = "Put your Spotify API Client Secret in this string";
+                options.ClientId = Globals.SpotifyClientID;
+                options.ClientSecret = Globals.SpotifClientSecret;
                 options.CallbackPath = "/SpotifyAPI/spotifylistplaylists";
                 options.SaveTokens = true;
 
-                //You do need all these scopes but this is for demonstration purposes of all possibilities.
                 options.Scope.Add("user-read-playback-position");
                 options.Scope.Add("user-read-email");
                 options.Scope.Add("user-library-read");
@@ -92,15 +83,15 @@ namespace SyncMusicFromExternalSources
 
                     ctx.Properties.StoreTokens(tokens);
 
-                    SpotifyUserAccessToken = ctx.Properties.GetTokenValue("access_token");
+                    Globals.SpotifyUserAccessToken = ctx.Properties.GetTokenValue("access_token");
                     NavMenu.IsLoggedIntoSpotify = true;
 
                     return Task.CompletedTask;
                 };
             }).AddGoogle(options =>
             {
-                options.ClientId = "Put your Google Youtube API Client ID in this string";
-                options.ClientSecret = "Put your Google Youtube API Client Secret in this string";
+                options.ClientId = Globals.GoogleApisClientID;
+                options.ClientSecret = Globals.GoogleApisClientSecret;
                 options.CallbackPath = "/YoutubeAPI/youtubelistplaylists";
                 options.SaveTokens = true;
 
@@ -123,8 +114,66 @@ namespace SyncMusicFromExternalSources
 
                     ctx.Properties.StoreTokens(tokens);
 
-                    GoogleUserAccessToken = ctx.Properties.GetTokenValue("access_token");
+                    Globals.GoogleUserAccessToken = ctx.Properties.GetTokenValue("access_token");
                     NavMenu.IsLoggedIntoGoogle = true;
+
+                    return Task.CompletedTask;
+                };
+            }).AddTwitter(options =>
+            {
+                options.ConsumerKey = Globals.TwitterApiConsumerKey;
+                options.ConsumerSecret = Globals.TwitterApiConsumerSecret;
+                options.CallbackPath = "/TwitterAPI/twittertweetslist";
+                options.SaveTokens = true;
+
+                options.Events.OnRemoteFailure = (context) =>
+                {
+                    return Task.CompletedTask;
+                };
+
+                options.Events.OnCreatingTicket = ctx =>
+                {
+                    List<AuthenticationToken> tokens = ctx.Properties.GetTokens().ToList();
+
+                    tokens.Add(new AuthenticationToken()
+                    {
+                        Name = "TicketCreated",
+                        Value = DateTime.UtcNow.ToString()
+                    });
+
+                    ctx.Properties.StoreTokens(tokens);
+
+                    Globals.TwitterUserAccessToken = ctx.Properties.GetTokenValue("access_token");
+                    NavMenu.IsLoggedIntoTwitter = true;
+
+                    return Task.CompletedTask;
+                };
+            }).AddFacebook(options =>
+            {
+                options.AppId = Globals.FacebookApiID;
+                options.AppSecret = Globals.FacebookApiAppSecret;
+                options.CallbackPath = "/FacebookAPI/facebookpostslist";
+                options.SaveTokens = true;
+
+                options.Events.OnRemoteFailure = (context) =>
+                {
+                    return Task.CompletedTask;
+                };
+
+                options.Events.OnCreatingTicket = ctx =>
+                {
+                    List<AuthenticationToken> tokens = ctx.Properties.GetTokens().ToList();
+
+                    tokens.Add(new AuthenticationToken()
+                    {
+                        Name = "TicketCreated",
+                        Value = DateTime.UtcNow.ToString()
+                    });
+
+                    ctx.Properties.StoreTokens(tokens);
+
+                    Globals.FacebookUserAccessToken = ctx.Properties.GetTokenValue("access_token");
+                    NavMenu.IsLoggedIntoFacebook = true;
 
                     return Task.CompletedTask;
                 };
