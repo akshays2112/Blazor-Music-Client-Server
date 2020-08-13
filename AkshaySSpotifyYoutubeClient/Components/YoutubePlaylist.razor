@@ -1,6 +1,5 @@
-﻿@using Google.Apis.YouTube.v3
-@using Google.Apis.Services
-@using Google.Apis.YouTube.v3.Data
+﻿@using Newtonsoft.Json
+@using System.Net
 @if (SingleYoutubePlaylist.Count > 0)
 {
     <span title="Load or Refresh">
@@ -42,37 +41,57 @@ Playlist Title :: @SingleYoutubePlaylist.Title
     [Parameter]
     public MyPlaylist SingleYoutubePlaylist { get; set; }
 
+
+    string youtubeAccessToken;
+
     [Parameter]
     public List<UserPlaylist> SpotifyUserPlayLists { get; set; }
+
+    HttpClient httpClient = new HttpClient { BaseAddress = Globals.BaseAddress };
 
     string divID = $"divID{(Globals.DivIndex++).ToString()}";
     string svgPathID = $"svgPathID{(Globals.DivIndex++).ToString()}";
 
+    async Task<MyYoutubePlaylist> GetYoutubePlaylists<MyYoutubePlaylist>(string nextPageToken = null)
+    {
+        string part = WebUtility.UrlEncode("snippet,contentDetails");
+        string pageToken = !string.IsNullOrWhiteSpace(nextPageToken) ? $"&page_token={nextPageToken}" : "";
+
+        var builder = new UriBuilder($"https://www.googleapis.com/youtube/v3/playlistItems?access_token={youtubeAccessToken}&playlistId={SingleYoutubePlaylist.ID}&part={part}&maxResults=50{pageToken}");
+
+        HttpResponseMessage request = await httpClient.GetAsync(builder.Uri);
+        string response = await request.Content.ReadAsStringAsync();
+        return JsonConvert.DeserializeObject<MyYoutubePlaylist>(response);
+    }
+
+    async Task<string> AddMyPlaylistItems(string nextPageToken = null)
+    {
+        MyYoutubePlaylist youtubePlaylist = await GetYoutubePlaylists<MyYoutubePlaylist>(nextPageToken);
+        if (youtubePlaylist?.Items?.Length > 0)
+        {
+            foreach (Item item in youtubePlaylist.Items)
+            {
+                MyPlaylist.MyPlayListItem myPlaylistItem = new MyPlaylist.MyPlayListItem(item.Snippet.Title, item.Id);
+                SingleYoutubePlaylist.MyPlayListItems.Add(myPlaylistItem);
+            }
+            return youtubePlaylist.NextPageToken;
+        }
+        return null;
+    }
+
     async Task LoadYoutubePlaylistItems()
     {
-        SingleYoutubePlaylist.MyPlayListItems.Clear();
-        YouTubeService yts = new YouTubeService(new BaseClientService.Initializer
+        if (!string.IsNullOrWhiteSpace(Globals.GoogleApisYoutubeAccessToken?.access_token))
         {
-            ApplicationName = Globals.GoogleApisApplicationName,
-            ApiKey = Globals.GoogleApisApiKey
-        });
-        PlaylistItemsResource.ListRequest pir = yts.PlaylistItems.List("snippet,contentDetails");
-        pir.MaxResults = 50;
-        pir.AccessToken = Globals.GoogleUserAccessToken;
-        pir.PlaylistId = SingleYoutubePlaylist.ID;
-        PlaylistItemListResponse pilr = await pir.ExecuteAsync();
-        foreach (PlaylistItem pi in pilr.Items)
-        {
-            SingleYoutubePlaylist.MyPlayListItems.Add(new MyPlaylist.MyPlayListItem(pi.Snippet.Title, pi.Id));
-        }
-        while (pilr.NextPageToken != null && pilr.NextPageToken.Length > 0)
-        {
-            pir.PageToken = pilr.NextPageToken;
-            pilr = await pir.ExecuteAsync();
-            foreach (PlaylistItem pi in pilr.Items)
+            SingleYoutubePlaylist.MyPlayListItems = new List<MyPlaylist.MyPlayListItem>();
+            youtubeAccessToken = Globals.GoogleApisYoutubeAccessToken.access_token;
+            string nextPageToken = await AddMyPlaylistItems();
+            while (!string.IsNullOrWhiteSpace(nextPageToken))
             {
-                SingleYoutubePlaylist.MyPlayListItems.Add(new MyPlaylist.MyPlayListItem(pi.Snippet.Title, pi.Id));
+                nextPageToken = await AddMyPlaylistItems(nextPageToken);
             }
         }
+
+        await base.OnInitializedAsync();
     }
 }

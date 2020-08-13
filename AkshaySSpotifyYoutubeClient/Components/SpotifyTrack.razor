@@ -43,6 +43,6 @@ Spotify Track Name :: @Track.Name
 
     void AddTrack(UserPlaylist userPlaylist)
     {
-        playlistsApi.AddItemsToPlaylist(userPlaylist.Id, new string[] { $"spotify:track:{Track.ID}" }, accessToken: Globals.SpotifyUserAccessToken);
+        playlistsApi.AddItemsToPlaylist(userPlaylist.Id, new string[] { $"spotify:track:{Track.ID}" }, accessToken: Globals.SpotifyAccessToken.access_token);
     }
 }

@@ -1,0 +1,75 @@
+﻿@page "/findandaddspotifysongsforexistingyoutubemusicvideos"
+@using Newtonsoft.Json
+@using System.Net
+@using SpotifyApi.NetCore
+@inject NavigationManager navMgr
+@inject IUsersProfileApi usersApi
+@inject IPlaylistsApi playlistsApi
+<h3>YoutubeListPlaylists</h3>
+<table class="table table-dark">
+    @foreach (MyPlaylist myPlaylist in myPlaylists)
+    {
+        <tr>
+            <td>
+                <AkshaySSpotifyYoutubeClient.Components.YoutubePlaylist SingleYoutubePlaylist="@myPlaylist" SpotifyUserPlayLists="@userPlayLists" />
+            </td>
+        </tr>
+    }
+</table>
+@code {
+    List<UserPlaylist> userPlayLists = new List<UserPlaylist>();
+    string youtubeAccessToken;
+    List<MyPlaylist> myPlaylists = new List<MyPlaylist>();
+    HttpClient httpClient = new HttpClient { BaseAddress = Globals.BaseAddress };
+
+    async Task<YoutubePlaylist> GetYoutubePlaylists<YoutubePlaylist>(string nextPageToken = null)
+    {
+        string part = WebUtility.UrlEncode("snippet,contentDetails");
+        string pageToken = !string.IsNullOrWhiteSpace(nextPageToken) ? $"&page_token={nextPageToken}" : "";
+
+        var builder = new UriBuilder($"https://www.googleapis.com/youtube/v3/playlists?access_token={youtubeAccessToken}&part={part}&mine=true&maxResults=50{pageToken}");
+
+        HttpResponseMessage request = await httpClient.GetAsync(builder.Uri);
+        string response = await request.Content.ReadAsStringAsync();
+        return JsonConvert.DeserializeObject<YoutubePlaylist>(response);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        User user = await usersApi.GetCurrentUsersProfile(Globals.SpotifyAccessToken.access_token);
+        PlaylistsSearchResult playlistsSearchResult = await playlistsApi.GetPlaylists(user.Id, Globals.SpotifyAccessToken.access_token);
+        foreach (PlaylistSimplified playlistSimplified in playlistsSearchResult.Items)
+        {
+            UserPlaylist userPlaylist = new UserPlaylist(playlistSimplified.Name, playlistSimplified.Tracks.Total, playlistSimplified.Id);
+            userPlayLists.Add(userPlaylist);
+        }
+
+        if (!string.IsNullOrWhiteSpace(Globals.GoogleApisYoutubeAccessToken?.access_token))
+        {
+            myPlaylists = new List<MyPlaylist>();
+            youtubeAccessToken = Globals.GoogleApisYoutubeAccessToken.access_token;
+            string nextPageToken = await AddMyPlaylist();
+            while (!string.IsNullOrWhiteSpace(nextPageToken))
+            {
+                nextPageToken = await AddMyPlaylist(nextPageToken);
+            }
+        }
+
+        await base.OnInitializedAsync();
+    }
+
+    async Task<string> AddMyPlaylist(string nextPageToken = null)
+    {
+        MyYoutubePlaylist youtubePlaylist = await GetYoutubePlaylists<MyYoutubePlaylist>(nextPageToken);
+        if (youtubePlaylist?.Items?.Length > 0)
+        {
+            foreach (Item item in youtubePlaylist.Items)
+            {
+                MyPlaylist myPlaylist = new MyPlaylist(item.Snippet.Title, item.Id, item.ContentDetails.ItemCount);
+                myPlaylists.Add(myPlaylist);
+            }
+            return youtubePlaylist.NextPageToken;
+        }
+        return null;
+    }
+}

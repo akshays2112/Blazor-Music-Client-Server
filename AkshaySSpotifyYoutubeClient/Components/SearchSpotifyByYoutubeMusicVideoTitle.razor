@@ -52,7 +52,7 @@ Youtube Video Title :: @YoutubePlaylistItem.Title
     async Task SearchSpotifyByTitle()
     {
         searchTracks.Clear();
-        SearchResult searchResult = await searchApi.Search(YoutubePlaylistItem.CleanedUpTitle, "track", "US", 50, 0, Globals.SpotifyUserAccessToken);
+        SearchResult searchResult = await searchApi.Search(YoutubePlaylistItem.CleanedUpTitle, "track", "US", 50, 0, Globals.SpotifyAccessToken.access_token);
         foreach (Track track in searchResult.Tracks.Items)
         {
             CustomTrack customTrack = new CustomTrack(track.Name, track.Id);
