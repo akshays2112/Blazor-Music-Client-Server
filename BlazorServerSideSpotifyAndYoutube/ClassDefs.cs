@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using Newtonsoft.Json;
 
-namespace AkshaySSpotifyYoutubeClient
+namespace BlazorServerSideSpotifyAndYoutube
 {
     public class Globals
     {
