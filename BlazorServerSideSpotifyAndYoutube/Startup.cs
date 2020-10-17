@@ -36,6 +36,7 @@ namespace AkshaySSpotifyYoutubeClient
             services.AddSingleton(typeof(IUsersProfileApi), typeof(UsersProfileApi));
             services.AddSingleton(typeof(IFollowApi), typeof(FollowApi));
             services.AddSingleton(typeof(ISearchApi), typeof(SearchApi));
+            services.AddSingleton(typeof(IPlayerApi), typeof(PlayerApi));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
