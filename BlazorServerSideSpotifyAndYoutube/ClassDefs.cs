@@ -7,6 +7,7 @@ namespace BlazorServerSideSpotifyAndYoutube
 {
     public class Globals
     {
+        /*
         public static SpotifyAccessToken SpotifyAccessToken;
         public static GoogleApisYoutubeAccessToken GoogleApisYoutubeAccessToken;
         public static string GoogleApisYoutubeClientId = "Your Google Apis Youtube Client ID";
@@ -14,6 +15,14 @@ namespace BlazorServerSideSpotifyAndYoutube
         public static Uri BaseAddress;
         public static string SpotifyClientId = "Your Spotify Client ID";
         public static string SpotifyClientSecret = "Spotify Client Secret";
+        */
+        public static SpotifyAccessToken SpotifyAccessToken;
+        public static GoogleApisYoutubeAccessToken GoogleApisYoutubeAccessToken;
+        public static string GoogleApisYoutubeClientId = "273525569729-e0mbv841egs4unbqfghv10h8om7f4kh3.apps.googleusercontent.com";
+        public static int DivIndex = 0;
+        public static Uri BaseAddress;
+        public static string SpotifyClientId = "d0052cf8055246fa8dbd71b5b84284be";
+        public static string SpotifyClientSecret = "a998f5872f93419fb01f3b30c31cb6e3";
     }
 
     public class SpotifyAccessToken
@@ -74,12 +83,12 @@ namespace BlazorServerSideSpotifyAndYoutube
         public class UserPlaylistTrack
         {
             public string Name { get; set; }
-            public int Index { get; set; }
+            public string Id { get; set; }
 
-            public UserPlaylistTrack(string name, int index)
+            public UserPlaylistTrack(string name, string id)
             {
                 Name = name;
-                Index = index;
+                Id = id;
             }
         }
 
